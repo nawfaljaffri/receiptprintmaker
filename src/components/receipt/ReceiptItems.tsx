@@ -14,12 +14,12 @@ export const ReceiptItems: React.FC<ReceiptItemsProps> = ({ items, itemLayout, c
         {itemLayout === 'comparative' ? (
           <>
             <div className="comparative-col">
-              <span>{item.quantity} x {item.name}</span>
-              <span>{currencySymbol}{(item.quantity * item.price).toFixed(2)}</span>
+              <span className="item-name">{item.quantity} x {item.name}</span>
+              <span className="item-price">{currencySymbol}{(item.quantity * item.price).toFixed(2)}</span>
             </div>
             <div className="comparative-col">
-              <span>{item.quantity} x {item.secondaryName || ''}</span>
-              <span>{currencySymbol}{(item.quantity * (item.secondaryPrice || 0)).toFixed(2)}</span>
+              <span className="item-name">{item.quantity} x {item.secondaryName || ''}</span>
+              <span className="item-price">{currencySymbol}{(item.quantity * (item.secondaryPrice || 0)).toFixed(2)}</span>
             </div>
           </>
         ) : (

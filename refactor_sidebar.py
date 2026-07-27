@@ -1,33 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Accordion } from './Accordion';
-import { CustomSelect } from './CustomSelect';
-import type { ReceiptData } from '../types';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import re
+
+with open('src/components/Sidebar.tsx', 'r') as f:
+    content = f.read()
+
+# Add imports
+imports = """import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Building, CalendarDays, ShoppingBag, Calculator, Palette, MessageSquare, Plus, Trash2, Sliders, Menu, ChevronLeft, GripVertical, QrCode } from 'lucide-react';
-import { SavedReceiptsSection } from './sidebar/SavedReceiptsSection';
+import { Building, CalendarDays, ShoppingBag, Calculator, Palette, MessageSquare, Plus, Trash2, Sliders, Menu, ChevronLeft, GripVertical, QrCode } from 'lucide-react';"""
 
-interface SidebarProps {
-  data: ReceiptData;
-  onChange: (data: ReceiptData) => void;
-}
+content = re.sub(r"import \{ Building.*?\} from 'lucide-react';", imports, content)
 
-const Toggle: React.FC<{ checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, name: string }> = ({ checked, onChange, name }) => (
-  <label className="toggle-switch">
-    <input type="checkbox" name={name} checked={checked} onChange={onChange} />
-    <span className="toggle-slider"></span>
-  </label>
-);
-
-const LabeledToggle: React.FC<{ label: string, checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, name: string }> = ({ label, checked, onChange, name }) => (
-  <div className="toggle-wrapper">
-    <span className="form-label" style={{ marginBottom: 0 }}>{label}</span>
-    <Toggle checked={checked} onChange={onChange} name={name} />
-  </div>
-);
-
-
+# Add SortableSection
+sortable_section = """
 const SortableSection: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
   
@@ -51,8 +36,13 @@ const SortableSection: React.FC<{ id: string; children: React.ReactNode }> = ({ 
     </div>
   );
 };
+"""
 
-export const Sidebar: React.FC<SidebarProps> = ({ data, onChange }) => {
+content = content.replace("export const Sidebar", sortable_section + "\nexport const Sidebar")
+
+# Add sensors and drag handler inside Sidebar
+sidebar_start = "export const Sidebar: React.FC<SidebarProps> = ({ data, onChange }) => {"
+sidebar_setup = """export const Sidebar: React.FC<SidebarProps> = ({ data, onChange }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -73,88 +63,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ data, onChange }) => {
       });
     }
   };
+"""
+content = content.replace(sidebar_start, sidebar_setup)
 
-  const [recentColors, setRecentColors] = useState<string[]>([]);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+# We need to extract the Accordions and wrap them.
+# I will just write the whole Accordions part manually because it's easier.
 
-  useEffect(() => {
-    const colors = localStorage.getItem('receipt_recent_colors');
-    if (colors) setRecentColors(JSON.parse(colors));
-  }, []);
-
-  const saveColorToCache = (color: string) => {
-    if (!recentColors.includes(color)) {
-      const updated = [color, ...recentColors].slice(0, 10);
-      setRecentColors(updated);
-      localStorage.setItem('receipt_recent_colors', JSON.stringify(updated));
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    
-    let parsedValue: any = value;
-    if (type === 'number' || type === 'range') {
-      parsedValue = parseFloat(value) || 0;
-    } else if (type === 'checkbox') {
-      parsedValue = (e.target as HTMLInputElement).checked;
-    }
-
-    onChange({ ...data, [name]: parsedValue });
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    onChange({ ...data, [name]: value });
-  };
-
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleChange(e);
-    saveColorToCache(e.target.value);
-  };
-
-  const applyColor = (name: string, color: string) => {
-    onChange({ ...data, [name]: color });
-  };
-
-  const addItem = () => {
-    const newItem = {
-      id: Date.now().toString(),
-      name: 'New Item',
-      quantity: 1,
-      price: 0,
-      secondaryName: data.itemLayout === 'comparative' ? 'Item B' : undefined,
-      secondaryPrice: data.itemLayout === 'comparative' ? 0 : undefined,
-    };
-    onChange({ ...data, items: [...data.items, newItem] });
-  };
-
-  const updateItem = (id: string, field: string, value: string | number) => {
-    const newItems = data.items.map(item => {
-      if (item.id === id) {
-        return { ...item, [field]: value };
-      }
-      return item;
-    });
-    onChange({ ...data, items: newItems });
-  };
-
-  const removeItem = (id: string) => {
-    onChange({ ...data, items: data.items.filter(item => item.id !== id) });
-  };
-
-  return (
-    <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-header" style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'space-between', alignItems: 'center' }}>
-        <h1 style={{ display: isCollapsed ? 'none' : 'block' }}>ReceiptMaker</h1>
-        <button className="btn-icon" onClick={() => setIsCollapsed(!isCollapsed)} title="Toggle Sidebar">
-          {isCollapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
-        </button>
-      </div>
-      
-      <div className="sidebar-content" style={{ display: isCollapsed ? 'none' : 'block' }}>
-        <SavedReceiptsSection currentData={data} onLoad={onChange} />
-
-        
+accordions_replacement = """
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={data.sectionOrder} strategy={verticalListSortingStrategy}>
             {data.sectionOrder.map(sectionId => {
@@ -250,7 +165,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ data, onChange }) => {
             })}
           </SortableContext>
         </DndContext>
-<Accordion title="Styling & Format" icon={<Palette size={16} />}>
+"""
+
+# We need to replace everything from `<Accordion title="Header & Store Info"` down to `</Accordion>` for Footer, and then insert the other accordions (styling, effects).
+# Let's find the boundaries using regex or string splitting.
+
+start_index = content.find('<Accordion \n          title="Header & Store Info"')
+if start_index == -1:
+    start_index = content.find('<Accordion title="Header & Store Info"')
+
+end_index = content.find('<Accordion title="Styling & Format"')
+
+if start_index != -1 and end_index != -1:
+    content = content[:start_index] + accordions_replacement + content[end_index:]
+
+# Also add divider dropdown inside Styling & Format
+styling_addition = """
           <div className="form-group">
             <label className="form-label">Divider Style</label>
             <CustomSelect 
@@ -266,125 +196,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ data, onChange }) => {
               onChange={(val) => handleSelectChange('dividerStyle', val)} 
             />
           </div>
+"""
 
-          <div className="form-group">
-            <label className="form-label">Paper Style</label>
-            <CustomSelect 
-              options={[
-                { label: 'Thermal Printer', value: 'thermal' },
-                { label: 'Clean Modern', value: 'clean' }
-              ]} 
-              value={data.paperStyle} 
-              onChange={(val) => handleSelectChange('paperStyle', val)} 
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Receipt Width</label>
-            <CustomSelect 
-              options={[
-                { label: 'Auto (Fit Content)', value: 'auto' },
-                { label: '58mm (Narrow)', value: '58mm' },
-                { label: '80mm (Standard)', value: '80mm' }
-              ]} 
-              value={data.receiptWidth || 'auto'} 
-              onChange={(val) => handleSelectChange('receiptWidth', val)} 
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Font Family</label>
-            <CustomSelect 
-              options={[
-                { label: 'Monospace (Classic)', value: 'monospace' },
-                { label: 'Sans Serif (Modern)', value: 'sans' }
-              ]} 
-              value={data.fontFamily} 
-              onChange={(val) => handleSelectChange('fontFamily', val)} 
-            />
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Background Color</label>
-            <div className="color-input-row">
-              <div className="color-picker-box">
-                <input type="color" name="backgroundColor" value={data.backgroundColor} onChange={handleColorChange} />
-              </div>
-              <input type="text" className="form-input" name="backgroundColor" value={data.backgroundColor} onChange={handleColorChange} />
-            </div>
-            {recentColors.length > 0 && (
-              <div className="color-swatches" style={{ marginTop: '0.5rem' }}>
-                {recentColors.map(color => (
-                  <div key={color} className="color-swatch" style={{ backgroundColor: color }} onClick={() => applyColor('backgroundColor', color)} />
-                ))}
-              </div>
-            )}
-          </div>
+content = content.replace('<Accordion title="Styling & Format" icon={<Palette size={16} />}>', '<Accordion title="Styling & Format" icon={<Palette size={16} />}>' + styling_addition)
 
-          <div className="form-group">
-            <label className="form-label">Text Color</label>
-            <div className="color-input-row">
-              <div className="color-picker-box">
-                <input type="color" name="textColor" value={data.textColor} onChange={handleColorChange} />
-              </div>
-              <input type="text" className="form-input" name="textColor" value={data.textColor} onChange={handleColorChange} />
-            </div>
-            {recentColors.length > 0 && (
-              <div className="color-swatches" style={{ marginTop: '0.5rem' }}>
-                {recentColors.map(color => (
-                  <div key={color} className="color-swatch" style={{ backgroundColor: color }} onClick={() => applyColor('textColor', color)} />
-                ))}
-              </div>
-            )}
-          </div>
+with open('src/components/Sidebar.tsx', 'w') as f:
+    f.write(content)
 
-          <LabeledToggle label="Transparent Background (PNG export)" name="isTransparent" checked={data.isTransparent} onChange={handleChange} />
-        </Accordion>
-
-        <Accordion title="Effects" icon={<Sliders size={16} />}>
-          <div className="form-group">
-            <label className="form-label">
-              <span>Ink Patchiness / Grain</span>
-              <span>{data.effectNoise}%</span>
-            </label>
-            <input type="range" style={{ width: '100%' }} name="effectNoise" min="0" max="100" value={data.effectNoise} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">
-              <span>Text Bleed / Blur</span>
-              <span>{data.effectBleed}%</span>
-            </label>
-            <input type="range" style={{ width: '100%' }} name="effectBleed" min="0" max="100" value={data.effectBleed} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">
-              <span>Thermal Fade</span>
-              <span>{data.effectFade}%</span>
-            </label>
-            <input type="range" style={{ width: '100%' }} name="effectFade" min="0" max="100" value={data.effectFade} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">
-              <span>Paper Creases</span>
-              <span>{data.effectCreases}%</span>
-            </label>
-            <input type="range" style={{ width: '100%' }} name="effectCreases" min="0" max="100" value={data.effectCreases} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">
-              <span>Printer Scratches</span>
-              <span>{data.effectScratches}%</span>
-            </label>
-            <input type="range" style={{ width: '100%' }} name="effectScratches" min="0" max="100" value={data.effectScratches} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">
-              <span>Paper Warp / Distortion</span>
-              <span>{data.effectWarp}%</span>
-            </label>
-            <input type="range" style={{ width: '100%' }} name="effectWarp" min="0" max="100" value={data.effectWarp} onChange={handleChange} />
-          </div>
-        </Accordion>
-
-      </div>
-    </div>
-  );
-};

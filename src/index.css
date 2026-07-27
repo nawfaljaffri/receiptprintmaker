@@ -762,3 +762,31 @@ input:checked + .toggle-slider:before {
     rgba(0,0,0,calc(1 - var(--effect-fade-opacity))) 100%
   );
 }
+
+.sortable-section {
+  position: relative;
+  /* margin-left: 20px; */
+}
+
+.sortable-section-grip {
+  position: absolute;
+  left: -20px;
+  top: 14px;
+  cursor: grab;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  width: 24px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.sortable-section-grip:hover {
+  opacity: 1;
+}
+
+.sortable-section-grip:active {
+  cursor: grabbing;
+}

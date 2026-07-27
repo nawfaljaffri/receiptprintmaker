@@ -1,4 +1,6 @@
 import React, { forwardRef, useMemo } from 'react';
+import Barcode from 'react-barcode';
+import QRCode from 'react-qr-code';
 import type { ReceiptData } from '../types';
 import { ReceiptHeader } from './receipt/ReceiptHeader';
 import { ReceiptDetails } from './receipt/ReceiptDetails';
@@ -42,7 +44,11 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ data }, ref) 
     effectFade,
     effectCreases,
     effectScratches,
-    effectWarp
+    effectWarp,
+    dividerStyle,
+    sectionOrder,
+    barcodeType,
+    barcodeValue
   } = data;
 
   // Calculate totals
@@ -50,28 +56,33 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ data }, ref) 
   const tax = subtotal * (taxRate / 100);
   const total = subtotal + tax - discount;
 
-  // Memoize barcode so it doesn't recalculate and cause lag on every keystroke
   const renderBarcode = useMemo(() => {
-    if (!showBarcode) return null;
+    if (!showBarcode || !barcodeValue) return null;
     
-    const bars = [];
-    let x = 0;
-    let key = 0;
-    while (x < 300) {
-      const width = Math.random() > 0.5 ? 2 : Math.random() > 0.5 ? 4 : 6;
-      if (Math.random() > 0.3) {
-        bars.push(<rect key={key++} x={x} y={0} width={width} height={40} />);
-      }
-      x += width + (Math.random() > 0.5 ? 2 : 4);
-    }
     return (
-      <div className="barcode-container">
-        <svg className="barcode-svg" viewBox="0 0 300 40" preserveAspectRatio="none">
-          {bars}
-        </svg>
+      <div className="barcode-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem', overflow: 'hidden' }}>
+        {barcodeType === 'qrcode' ? (
+          <QRCode 
+            value={barcodeValue} 
+            size={120} 
+            level="M"
+            bgColor="transparent" 
+            fgColor="currentColor" 
+          />
+        ) : (
+          <Barcode 
+            value={barcodeValue} 
+            width={barcodeValue.length > 10 ? 1.5 : 2}
+            height={50} 
+            displayValue={false} 
+            background="transparent" 
+            lineColor="currentColor" 
+            margin={0}
+          />
+        )}
       </div>
     );
-  }, [showBarcode]); // It only recalculates if showBarcode toggles, meaning it stays static during editing
+  }, [showBarcode, barcodeType, barcodeValue]);
 
   let actualWidth = 'auto';
   if (receiptWidth === '58mm') actualWidth = '280px';
@@ -90,7 +101,7 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ data }, ref) 
   const warpFilterEnabled = effectWarp > 0;
 
   const dynamicStyles: React.CSSProperties = {
-    fontFamily: fontFamily === 'monospace' ? "'JetBrains Mono', monospace" : "'Inter', sans-serif",
+    fontFamily: fontFamily === 'monospace' ? "'JetBrains Mono', monospace" : `'${fontFamily}', sans-serif`,
     backgroundColor: isTransparent ? 'transparent' : backgroundColor,
     color: textColor,
     width: actualWidth,
@@ -162,46 +173,66 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ data }, ref) 
       <div className="effect-layer effect-scratch"></div>
 
       <div className="receipt-content" style={{ filter: inkFilterEnabled ? 'url(#ink-filter)' : 'none' }}>
-        {showStoreInfo && (
-          <ReceiptHeader 
-            storeName={storeName} 
-            storeAddress={storeAddress} 
-            storePhone={storePhone} 
-            storeWebsite={storeWebsite} 
-          />
-        )}
-
-        {showDateDetails && (
-          <ReceiptDetails 
-            date={date} 
-            time={time} 
-            orderNumber={orderNumber} 
-            cashierName={cashierName} 
-          />
-        )}
-
-        <ReceiptItems 
-          items={items} 
-          itemLayout={itemLayout} 
-          currencySymbol={currencySymbol} 
-        />
-
-        {showTotals && (
-          <ReceiptTotals 
-            subtotal={subtotal} 
-            tax={tax} 
-            taxRate={taxRate} 
-            discount={discount} 
-            total={total} 
-            currencySymbol={currencySymbol} 
-          />
-        )}
-
-        {showFooter && footerMessage && (
-          <ReceiptFooter footerMessage={footerMessage} />
-        )}
-
-        {renderBarcode}
+        {sectionOrder.map((sectionId) => {
+          switch (sectionId) {
+            case 'header':
+              return showStoreInfo ? (
+                <ReceiptHeader 
+                  key="header"
+                  storeName={storeName} 
+                  storeAddress={storeAddress} 
+                  storePhone={storePhone} 
+                  storeWebsite={storeWebsite} 
+                  dividerStyle={dividerStyle}
+                />
+              ) : null;
+            case 'details':
+              return showDateDetails ? (
+                <ReceiptDetails 
+                  key="details"
+                  date={date} 
+                  time={time} 
+                  orderNumber={orderNumber} 
+                  cashierName={cashierName} 
+                  dividerStyle={dividerStyle}
+                />
+              ) : null;
+            case 'items':
+              return (
+                <ReceiptItems 
+                  key="items"
+                  items={items} 
+                  itemLayout={itemLayout} 
+                  currencySymbol={currencySymbol} 
+                />
+              );
+            case 'totals':
+              return showTotals ? (
+                <ReceiptTotals 
+                  key="totals"
+                  subtotal={subtotal} 
+                  tax={tax} 
+                  taxRate={taxRate} 
+                  discount={discount} 
+                  total={total} 
+                  currencySymbol={currencySymbol} 
+                  dividerStyle={dividerStyle}
+                />
+              ) : null;
+            case 'footer':
+              return showFooter && footerMessage ? (
+                <ReceiptFooter 
+                  key="footer"
+                  footerMessage={footerMessage} 
+                  dividerStyle={dividerStyle}
+                />
+              ) : null;
+            case 'barcode':
+              return <React.Fragment key="barcode">{renderBarcode}</React.Fragment>;
+            default:
+              return null;
+          }
+        })}
       </div>
     </div>
   );

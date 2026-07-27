@@ -1,4 +1,5 @@
 import React from 'react';
+import { ReceiptDivider } from './ReceiptDivider';
 
 interface ReceiptTotalsProps {
   subtotal: number;
@@ -7,11 +8,12 @@ interface ReceiptTotalsProps {
   discount: number;
   total: number;
   currencySymbol: string;
+  dividerStyle: 'dashed' | 'solid' | 'double' | 'dotted' | 'asterisk' | 'empty';
 }
 
-export const ReceiptTotals: React.FC<ReceiptTotalsProps> = ({ subtotal, tax, taxRate, discount, total, currencySymbol }) => (
+export const ReceiptTotals: React.FC<ReceiptTotalsProps> = ({ subtotal, tax, taxRate, discount, total, currencySymbol, dividerStyle }) => (
   <>
-    <hr className="receipt-divider" />
+    <ReceiptDivider type={dividerStyle} />
     <div className="receipt-totals">
       <div className="total-row">
         <span>Subtotal</span>

@@ -40,6 +40,12 @@ export interface ReceiptData {
   showFooter: boolean;
   showBarcode: boolean;
   
+  // Customization
+  dividerStyle: 'dashed' | 'solid' | 'double' | 'dotted' | 'asterisk' | 'empty';
+  sectionOrder: string[];
+  barcodeType: 'barcode' | 'qrcode';
+  barcodeValue: string;
+  
   // Style config
   fontFamily: string;
   paperStyle: 'clean' | 'thermal';
@@ -87,6 +93,11 @@ export const defaultReceiptData: ReceiptData = {
   showTotals: true,
   showFooter: true,
   showBarcode: true,
+  
+  dividerStyle: 'dashed',
+  sectionOrder: ['header', 'details', 'items', 'totals', 'footer', 'barcode'],
+  barcodeType: 'barcode',
+  barcodeValue: '123456789012',
   
   fontFamily: 'monospace',
   paperStyle: 'thermal',
