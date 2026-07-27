@@ -41,7 +41,7 @@ export interface ReceiptData {
   showBarcode: boolean;
   
   // Customization
-  dividerStyle: 'dashed' | 'solid' | 'double' | 'dotted' | 'asterisk' | 'empty';
+  dividerStyle: 'dashed' | 'solid' | 'double' | 'dotted' | 'asterisk' | 'equals' | 'empty';
   sectionOrder: string[];
   barcodeType: 'barcode' | 'qrcode';
   barcodeValue: string;

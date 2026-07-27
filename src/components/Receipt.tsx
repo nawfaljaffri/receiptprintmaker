@@ -84,9 +84,10 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ data }, ref) 
     );
   }, [showBarcode, barcodeType, barcodeValue]);
 
-  let actualWidth = 'auto';
-  if (receiptWidth === '58mm') actualWidth = '280px';
-  if (receiptWidth === '80mm') actualWidth = '380px';
+  // Width: for 'auto', let CSS max-width cap it so character dividers don't overflow
+  let actualWidth: string | undefined = undefined; // uses CSS default (320px)
+  if (receiptWidth === '58mm') actualWidth = '220px';
+  if (receiptWidth === '80mm') actualWidth = '302px';
 
   // Exponential scaling for smoother slider control
   const warpIntensity = Math.pow(effectWarp / 100, 2);

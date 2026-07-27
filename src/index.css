@@ -503,22 +503,39 @@ input:checked + .toggle-slider:before {
 .preview-content {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 2rem;
+  padding: 3rem 2rem;
   overflow: auto;
-  background-color: var(--bg-primary);
+  /* Dark canvas like the reference — makes the white receipt paper pop */
+  background-color: #1a1a1a;
+  background-image: radial-gradient(ellipse at center, #2a2a2a 0%, #111 100%);
+}
+
+[data-theme='light'] .preview-content {
+  background-color: #1a1a1a;
+  background-image: radial-gradient(ellipse at center, #2a2a2a 0%, #111 100%);
+}
+
+[data-theme='dark'] .preview-content {
+  background-color: #0d0d0d;
+  background-image: radial-gradient(ellipse at center, #1a1a1a 0%, #080808 100%);
 }
 
 /* Receipt Component styling */
 .receipt-wrapper {
-  background-color: white; /* Default, overridden inline */
-  color: black;            /* Default, overridden inline */
-  width: 380px;
-  min-height: 500px;
-  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
+  background-color: white;
+  color: black;
+  /* Default width — overridden by inline style for 58mm/80mm */
+  width: 320px;
+  /* Cap auto-width so character dividers don't blow it open */
+  max-width: 400px;
+  min-height: 200px;
+  /* CRITICAL: clips character divider overflow (asterisk, equals, dashes) */
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
   position: relative;
-  transition: all 0.3s ease;
+  transition: box-shadow 0.3s ease;
 }
 
 .receipt-content {

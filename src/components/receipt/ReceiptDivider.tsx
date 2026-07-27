@@ -1,73 +1,84 @@
 import React from 'react';
 
-type DividerType = 'dashed' | 'solid' | 'double' | 'dotted' | 'asterisk' | 'empty';
+type DividerType = 'dashed' | 'solid' | 'double' | 'dotted' | 'asterisk' | 'equals' | 'empty';
 
 interface ReceiptDividerProps {
   type: DividerType;
 }
 
 /**
- * Renders a receipt-authentic divider. The outer .divider-wrap
- * provides consistent breathing room (0.3rem top+bottom) so
- * divider margins are never set inside individual types.
+ * Character-based dividers fill their container width via overflow:hidden.
+ * The receipt-wrapper must have overflow:hidden for this to work correctly.
  */
+const CharDivider: React.FC<{ char: string; opacity?: number }> = ({ char, opacity = 0.65 }) => (
+  <div
+    style={{
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      lineHeight: 1.2,
+      opacity,
+      userSelect: 'none',
+      width: '100%',
+    }}
+    aria-hidden="true"
+  >
+    {/* 300 characters — always fills any receipt width and clips */}
+    {char.repeat(300)}
+  </div>
+);
+
 export const ReceiptDivider: React.FC<ReceiptDividerProps> = ({ type }) => {
-  if (type === 'empty') {
-    return <div style={{ height: '0.6rem' }} aria-hidden="true" />;
-  }
+  switch (type) {
+    case 'empty':
+      return <div style={{ height: '0.5rem' }} aria-hidden="true" />;
 
-  if (type === 'asterisk') {
-    // Tight asterisks like a real receipt: ******************
-    // Using a div with overflow:hidden so it fills width but never wraps
-    return (
-      <div className="divider-wrap" aria-hidden="true">
-        <div style={{
-          overflow: 'hidden',
-          whiteSpace: 'nowrap',
-          lineHeight: 1,
-          opacity: 0.7,
-          userSelect: 'none',
-        }}>
-          {/* 200 asterisks — will always fill the width */}
-          {'*'.repeat(200)}
+    case 'asterisk':
+      return (
+        <div className="divider-wrap">
+          <CharDivider char="*" opacity={0.6} />
         </div>
-      </div>
-    );
-  }
+      );
 
-  if (type === 'dashed') {
-    // Dash characters — authentic thermal paper feel
-    return (
-      <div className="divider-wrap" aria-hidden="true">
-        <div style={{
-          overflow: 'hidden',
-          whiteSpace: 'nowrap',
-          lineHeight: 1,
-          opacity: 0.55,
-          userSelect: 'none',
-          letterSpacing: '1px',
-        }}>
-          {'-'.repeat(200)}
+    case 'equals':
+      return (
+        <div className="divider-wrap">
+          <CharDivider char="=" opacity={0.7} />
         </div>
-      </div>
-    );
+      );
+
+    case 'dashed':
+      return (
+        <div className="divider-wrap">
+          <CharDivider char="-" opacity={0.5} />
+        </div>
+      );
+
+    case 'solid':
+      return (
+        <div className="divider-wrap">
+          <div style={{ borderBottom: '1px solid currentColor', opacity: 0.5 }} />
+        </div>
+      );
+
+    case 'double':
+      return (
+        <div className="divider-wrap">
+          <div style={{ borderBottom: '3px double currentColor', opacity: 0.6 }} />
+        </div>
+      );
+
+    case 'dotted':
+      return (
+        <div className="divider-wrap">
+          <div style={{ borderBottom: '2px dotted currentColor', opacity: 0.5 }} />
+        </div>
+      );
+
+    default:
+      return (
+        <div className="divider-wrap">
+          <CharDivider char="-" opacity={0.5} />
+        </div>
+      );
   }
-
-  // CSS border types for solid, double, dotted
-  const borderStyles: Record<string, string> = {
-    solid: '1px solid currentColor',
-    double: '3px double currentColor',
-    dotted: '2px dotted currentColor',
-  };
-
-  return (
-    <div className="divider-wrap" aria-hidden="true">
-      <div
-        style={{
-          borderBottom: borderStyles[type] || borderStyles.solid,
-          opacity: 0.5,
-        }}
-      />
-    </div>
-  );
 };

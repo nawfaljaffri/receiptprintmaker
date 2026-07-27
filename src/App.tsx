@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { Moon, Sun, Image as ImageIcon, FileText, ImagePlus, Undo2, Redo2 } from 'lucide-react';
+import { Moon, Sun, Image as ImageIcon, FileText, ImagePlus, Undo2, Redo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { Receipt } from './components/Receipt';
 import type { ReceiptData } from './types';
@@ -26,6 +26,7 @@ function App() {
   const [data, setData] = useState<ReceiptData>(getInitialData);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isExporting, setIsExporting] = useState(false);
+  const [zoom, setZoom] = useState(100);
 
   // Undo/Redo history stack
   const historyRef = useRef<ReceiptData[]>([getInitialData()]);
@@ -193,6 +194,32 @@ function App() {
             >
               <Redo2 size={18} />
             </button>
+
+            {/* Zoom divider */}
+            <div style={{ width: 1, height: 20, background: 'var(--border-color)', margin: '0 0.25rem' }} />
+
+            <button
+              className="btn btn-icon"
+              onClick={() => setZoom(z => Math.max(50, z - 10))}
+              disabled={zoom <= 50}
+              title="Zoom Out"
+            >
+              <ZoomOut size={18} />
+            </button>
+            <span style={{ fontSize: '0.75rem', minWidth: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              {zoom}%
+            </span>
+            <button
+              className="btn btn-icon"
+              onClick={() => setZoom(z => Math.min(200, z + 10))}
+              disabled={zoom >= 200}
+              title="Zoom In"
+            >
+              <ZoomIn size={18} />
+            </button>
+
+            <div style={{ width: 1, height: 20, background: 'var(--border-color)', margin: '0 0.25rem' }} />
+
             <button className="btn btn-icon" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
               {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -212,7 +239,14 @@ function App() {
         </div>
         
         <div className="preview-content">
-          <Receipt ref={receiptRef} data={data} />
+          {/* Zoom container: transforms scale but preserves scroll */}
+          <div style={{
+            transform: `scale(${zoom / 100})`,
+            transformOrigin: 'top center',
+            transition: 'transform 0.15s ease',
+          }}>
+            <Receipt ref={receiptRef} data={data} />
+          </div>
         </div>
       </div>
     </div>

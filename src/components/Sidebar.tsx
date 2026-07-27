@@ -255,11 +255,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ data, onChange }) => {
             <label className="form-label">Divider Style</label>
             <CustomSelect 
               options={[
-                { label: 'Dashed', value: 'dashed' },
-                { label: 'Solid', value: 'solid' },
-                { label: 'Double', value: 'double' },
-                { label: 'Dotted', value: 'dotted' },
-                { label: 'Asterisk (* * *)', value: 'asterisk' },
+                { label: 'Dashed ( - - - )', value: 'dashed' },
+                { label: 'Equals ( = = = )', value: 'equals' },
+                { label: 'Solid ( ——— )', value: 'solid' },
+                { label: 'Double ( ═══ )', value: 'double' },
+                { label: 'Dotted ( · · · )', value: 'dotted' },
+                { label: 'Asterisk ( *** )', value: 'asterisk' },
                 { label: 'Empty (Space)', value: 'empty' }
               ]} 
               value={data.dividerStyle || 'dashed'} 
