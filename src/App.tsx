@@ -11,7 +11,9 @@ const getInitialData = (): ReceiptData => {
   const savedData = localStorage.getItem('receipt_current_draft');
   if (savedData) {
     try {
-      return JSON.parse(savedData);
+      const parsed = JSON.parse(savedData);
+      // Merge with default data to ensure new properties exist
+      return { ...defaultReceiptData, ...parsed, sectionOrder: parsed.sectionOrder || defaultReceiptData.sectionOrder };
     } catch (e) {
       console.error('Failed to parse saved draft', e);
     }
@@ -35,6 +37,14 @@ function App() {
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleSetData = (newData: ReceiptData) => {
+    setData({
+      ...defaultReceiptData,
+      ...newData,
+      sectionOrder: newData.sectionOrder || defaultReceiptData.sectionOrder
+    });
   };
 
   const getCanvas = async () => {
@@ -113,7 +123,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <Sidebar data={data} onChange={setData} />
+      <Sidebar data={data} onChange={handleSetData} />
       
       <div className="preview-area">
         <div className="preview-toolbar">
