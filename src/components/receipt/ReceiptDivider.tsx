@@ -6,94 +6,68 @@ interface ReceiptDividerProps {
   type: DividerType;
 }
 
-// Renders character-based dividers (asterisk, dashed) as text so they look
-// authentically like real thermal receipt paper instead of CSS borders.
-const CharDivider: React.FC<{ char: string; spacing?: string }> = ({ char, spacing = ' ' }) => (
-  <div
-    aria-hidden="true"
-    style={{
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      margin: '0.6rem 0',
-      opacity: 0.65,
-      letterSpacing: spacing === ' ' ? '0' : '0',
-      userSelect: 'none',
-      lineHeight: 1.2,
-    }}
-  >
-    {/* Repeat enough to fill any receipt width */}
-    {Array(50).fill(char).join(spacing)}
-  </div>
-);
-
+/**
+ * Renders a receipt-authentic divider. The outer .divider-wrap
+ * provides consistent breathing room (0.3rem top+bottom) so
+ * divider margins are never set inside individual types.
+ */
 export const ReceiptDivider: React.FC<ReceiptDividerProps> = ({ type }) => {
-  switch (type) {
-    case 'empty':
-      return <div style={{ height: '0.75rem' }} aria-hidden="true" />;
-
-    case 'asterisk':
-      // Spaced asterisks: "* * * * * * * * * *" — like the reference image
-      return <CharDivider char="*" spacing=" " />;
-
-    case 'dashed':
-      // Dash characters: "- - - - - - -" for authentic thermal look
-      return (
-        <div
-          aria-hidden="true"
-          style={{
-            borderBottom: '1px dashed currentColor',
-            margin: '0.75rem 0',
-            opacity: 0.7,
-          }}
-        />
-      );
-
-    case 'solid':
-      return (
-        <div
-          aria-hidden="true"
-          style={{
-            borderBottom: '1px solid currentColor',
-            margin: '0.75rem 0',
-            opacity: 0.5,
-          }}
-        />
-      );
-
-    case 'double':
-      return (
-        <div
-          aria-hidden="true"
-          style={{
-            borderBottom: '3px double currentColor',
-            margin: '0.75rem 0',
-            opacity: 0.6,
-          }}
-        />
-      );
-
-    case 'dotted':
-      return (
-        <div
-          aria-hidden="true"
-          style={{
-            borderBottom: '2px dotted currentColor',
-            margin: '0.75rem 0',
-            opacity: 0.55,
-          }}
-        />
-      );
-
-    default:
-      return (
-        <div
-          aria-hidden="true"
-          style={{
-            borderBottom: '1px dashed currentColor',
-            margin: '0.75rem 0',
-            opacity: 0.7,
-          }}
-        />
-      );
+  if (type === 'empty') {
+    return <div style={{ height: '0.6rem' }} aria-hidden="true" />;
   }
+
+  if (type === 'asterisk') {
+    // Tight asterisks like a real receipt: ******************
+    // Using a div with overflow:hidden so it fills width but never wraps
+    return (
+      <div className="divider-wrap" aria-hidden="true">
+        <div style={{
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          lineHeight: 1,
+          opacity: 0.7,
+          userSelect: 'none',
+        }}>
+          {/* 200 asterisks — will always fill the width */}
+          {'*'.repeat(200)}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'dashed') {
+    // Dash characters — authentic thermal paper feel
+    return (
+      <div className="divider-wrap" aria-hidden="true">
+        <div style={{
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          lineHeight: 1,
+          opacity: 0.55,
+          userSelect: 'none',
+          letterSpacing: '1px',
+        }}>
+          {'-'.repeat(200)}
+        </div>
+      </div>
+    );
+  }
+
+  // CSS border types for solid, double, dotted
+  const borderStyles: Record<string, string> = {
+    solid: '1px solid currentColor',
+    double: '3px double currentColor',
+    dotted: '2px dotted currentColor',
+  };
+
+  return (
+    <div className="divider-wrap" aria-hidden="true">
+      <div
+        style={{
+          borderBottom: borderStyles[type] || borderStyles.solid,
+          opacity: 0.5,
+        }}
+      />
+    </div>
+  );
 };

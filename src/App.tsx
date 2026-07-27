@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { Moon, Sun, Image as ImageIcon, FileText, ImagePlus } from 'lucide-react';
+import { Moon, Sun, Image as ImageIcon, FileText, ImagePlus, Undo2, Redo2 } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { Receipt } from './components/Receipt';
 import type { ReceiptData } from './types';
@@ -27,6 +27,14 @@ function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isExporting, setIsExporting] = useState(false);
 
+  // Undo/Redo history stack
+  const historyRef = useRef<ReceiptData[]>([getInitialData()]);
+  const historyIndexRef = useRef(0);
+  const skipHistoryRef = useRef(false); // prevent undo/redo from pushing to history
+
+  const canUndo = historyIndexRef.current > 0;
+  const canRedo = historyIndexRef.current < historyRef.current.length - 1;
+
   useEffect(() => {
     localStorage.setItem('receipt_current_draft', JSON.stringify(data));
   }, [data]);
@@ -35,17 +43,58 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Keyboard shortcuts: Cmd+Z / Cmd+Shift+Z
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const handleSetData = (newData: ReceiptData) => {
-    setData({
+  const handleSetData = useCallback((newData: ReceiptData) => {
+    const merged = {
       ...defaultReceiptData,
       ...newData,
       sectionOrder: newData.sectionOrder || defaultReceiptData.sectionOrder
-    });
-  };
+    };
+    setData(merged);
+    // Push to history (trim redo stack)
+    if (!skipHistoryRef.current) {
+      const newHistory = historyRef.current.slice(0, historyIndexRef.current + 1);
+      newHistory.push(merged);
+      if (newHistory.length > 50) newHistory.shift(); // cap at 50
+      historyRef.current = newHistory;
+      historyIndexRef.current = newHistory.length - 1;
+    }
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    if (historyIndexRef.current <= 0) return;
+    historyIndexRef.current -= 1;
+    skipHistoryRef.current = true;
+    setData(historyRef.current[historyIndexRef.current]);
+    skipHistoryRef.current = false;
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+    historyIndexRef.current += 1;
+    skipHistoryRef.current = true;
+    setData(historyRef.current[historyIndexRef.current]);
+    skipHistoryRef.current = false;
+  }, []);
 
   const getCanvas = async () => {
     if (!receiptRef.current) return null;
@@ -127,7 +176,23 @@ function App() {
       
       <div className="preview-area">
         <div className="preview-toolbar">
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              className="btn btn-icon"
+              onClick={handleUndo}
+              disabled={!canUndo}
+              title="Undo (Cmd+Z)"
+            >
+              <Undo2 size={18} />
+            </button>
+            <button
+              className="btn btn-icon"
+              onClick={handleRedo}
+              disabled={!canRedo}
+              title="Redo (Cmd+Shift+Z)"
+            >
+              <Redo2 size={18} />
+            </button>
             <button className="btn btn-icon" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
               {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
