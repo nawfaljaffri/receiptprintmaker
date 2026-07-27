@@ -49,6 +49,7 @@ export interface ReceiptData {
   
   // Layout Mode
   itemLayout: 'standard' | 'comparative';
+  receiptWidth: string;
   
   // Realistic Effects (0 to 100)
   effectNoise: number;
